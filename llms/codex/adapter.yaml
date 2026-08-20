@@ -1,0 +1,6 @@
+version: 1
+llm: codex
+generated_files:
+  - AGENTS.md
+template: llms/codex/templates/AGENTS.md.tmpl
+profile: profiles/telemedecine-afrique/profile.yaml

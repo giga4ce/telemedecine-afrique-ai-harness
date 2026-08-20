@@ -1,0 +1,8 @@
+version: 1
+llm: claude
+generated_files:
+  - CLAUDE.md
+  - .claude/agents
+template: llms/claude/templates/CLAUDE.md.tmpl
+profile: profiles/telemedecine-afrique/profile.yaml
+agents_source: llms/claude/agents

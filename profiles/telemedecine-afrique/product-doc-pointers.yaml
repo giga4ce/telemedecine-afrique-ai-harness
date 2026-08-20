@@ -1,0 +1,22 @@
+version: 1
+
+product_docs:
+  read_first:
+    - README.md
+    - docs/README.md
+    - docs/poc/scope.md
+    - docs/poc/architecture.md
+
+  vision:
+    - docs/product/vision.md
+    - docs/product/roadmap.md
+
+  domain:
+    - docs/product/glossary.md
+    - docs/domain/legal-reserves-by-country.md
+
+  target_platform:
+    - docs/target-platform/ai-functional-agents/README.md
+
+  data:
+    - data/README.md

@@ -1,0 +1,15 @@
+version: 1
+
+recommended_skills:
+  common:
+    - skills/common/git-workflow
+    - skills/common/documentation
+    - skills/common/architecture-review
+  healthcare:
+    - skills/healthcare/data-safety
+    - skills/healthcare/dicom
+
+claude_conditional_skills:
+  future_stack_not_initialized:
+    - llms/claude/skills/conditional/api-platform-conventions
+    - llms/claude/skills/conditional/react-conventions

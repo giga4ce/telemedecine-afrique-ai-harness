@@ -1,0 +1,17 @@
+version: 1
+profile: telemedecine-afrique
+product_repository:
+  name: telemedecine-afrique
+  remote: git@github.com:giga4ce/telemedecine-afrique.git
+  default_local_path: /home/harou/PhpstormProjects/telemed/telemedecine-afrique
+current_focus:
+  phase: POC technique de téléradiologie
+  first_field_validation: Tchad
+  stack:
+    - Orthanc
+    - DICOMweb
+    - OHIF Viewer
+    - Docker Compose
+adapters:
+  - codex
+  - claude

@@ -4,7 +4,8 @@
 - Distinguer ce qui est implémenté, documenté, envisagé ou hors périmètre.
 - Garder le POC simple : Orthanc, DICOMweb, OHIF, Docker Compose, données de test.
 - Ne pas introduire de fonctionnalité non demandée.
-- Ne jamais introduire de donnée patient réelle.
+- Ne jamais introduire de donnée patient réelle, y compris en local, test ou démonstration.
+- Respecter le workflow de validation : un médecin inscrit n'agit qu'après validation par l'administrateur plateforme ; l'accès d'un établissement partenaire est créé par l'administrateur (pas d'auto-activation).
 - Ne jamais exposer de secret, token, clé privée, mot de passe ou donnée d'accès.
 - Documenter les décisions structurelles dans la documentation produit ou une ADR future.
 - Privilégier des changements minimaux, vérifiables et testables.

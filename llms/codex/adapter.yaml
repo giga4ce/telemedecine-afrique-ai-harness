@@ -4,3 +4,15 @@ generated_files:
   - AGENTS.md
 template: llms/codex/templates/AGENTS.md.tmpl
 profile: profiles/telemedecine-afrique/profile.yaml
+install_root: .codex
+manifest: .codex/harness-manifest.json
+backup_dir: .codex/.harness-backups
+entrypoint:
+  source: llms/codex/templates/AGENTS.md.tmpl
+  destination: AGENTS.md
+context:
+  source: profiles/{profile}/context
+  destination: .codex/context
+skills:
+  include_profile_recommended: true
+  destination: .codex/skills

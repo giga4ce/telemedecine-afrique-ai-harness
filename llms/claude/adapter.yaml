@@ -6,3 +6,21 @@ generated_files:
 template: llms/claude/templates/CLAUDE.md.tmpl
 profile: profiles/telemedecine-afrique/profile.yaml
 agents_source: llms/claude/agents
+install_root: .claude
+manifest: .claude/harness-manifest.json
+backup_dir: .claude/.harness-backups
+entrypoint:
+  source: llms/claude/templates/CLAUDE.md.tmpl
+  destination: CLAUDE.md
+context:
+  source: profiles/{profile}/context
+  destination: .claude/context
+agents:
+  source: llms/claude/agents
+  destination: .claude/agents
+skills:
+  include_profile_recommended: true
+  destination: .claude/skills
+conditional_skills:
+  include_profile_conditional: false
+  destination: .claude/skills/conditional

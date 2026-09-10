@@ -11,6 +11,31 @@ Le repository produit reste la source canonique pour la vision, le POC, l'archit
 - `llms/claude/` : adapter, template et sous-agents Claude.
 - `skills/` : skills réutilisables.
 - `docs/mcp/` : recommandations MCP et connecteurs.
+- `scripts/install-context` : installe le contexte généré dans un repository produit.
+
+## Installation du contexte
+
+Exemple Codex :
+
+```bash
+./scripts/install-context \
+  --llm codex \
+  --profile telemedecine-afrique \
+  --target /path/to/telemedecine-afrique \
+  --dry-run
+```
+
+Exemple Claude :
+
+```bash
+./scripts/install-context \
+  --llm claude \
+  --profile telemedecine-afrique \
+  --target /path/to/telemedecine-afrique \
+  --dry-run
+```
+
+Lire [`docs/install-context.md`](docs/install-context.md) pour les options, les manifestes, les conflits et les codes de sortie.
 
 ## Hors périmètre
 

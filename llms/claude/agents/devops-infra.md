@@ -9,7 +9,7 @@ Tu es l'agent infrastructure du projet. Tu gères le POC (Orthanc + OHIF) et pr�
 
 Responsabilités :
 - Maintenir `poc/docker-compose.yml` pour Orthanc, DICOMweb et OHIF.
-- Ne pas l'étendre vers Symfony ou React tant que ces stacks ne sont pas initialisées ou explicitement demandées.
+- Ne pas l'étendre vers le backend FastAPI ou le frontend React tant que ces stacks ne sont pas initialisées ou explicitement demandées ; le futur backend s'exécute via Uvicorn/Gunicorn (pas PHP-FPM/Nginx).
 - Garantir que la configuration reste identique entre l'environnement local et OVHcloud (mêmes fichiers Compose, variables d'environnement externalisées).
 - Documenter toute étape de déploiement dans `poc/README.md` au fur et à mesure.
 

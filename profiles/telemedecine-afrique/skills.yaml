@@ -11,5 +11,5 @@ recommended_skills:
 
 claude_conditional_skills:
   future_stack_not_initialized:
-    - llms/claude/skills/conditional/api-platform-conventions
+    - llms/claude/skills/conditional/fastapi-conventions
     - llms/claude/skills/conditional/react-conventions

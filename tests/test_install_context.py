@@ -149,6 +149,55 @@ class InstallContextTest(unittest.TestCase):
         self.assertTrue((self.product / ".claude/agents/devops-infra.md").is_file())
         self.assertFalse((self.product / ".claude/skills/conditional").exists())
 
+    def test_claude_installation_creates_mcp_json(self):
+        self.run_cmd(*self.base_args("claude"), check=True)
+
+        mcp_path = self.product / ".mcp.json"
+        self.assertTrue(mcp_path.is_file())
+        data = json.loads(mcp_path.read_text(encoding="utf-8"))
+        server = data["mcpServers"]["atlassian"]
+        self.assertEqual("http", server["type"])
+        self.assertEqual("https://mcp.atlassian.com/v2/mcp", server["url"])
+
+        manifest = json.loads(
+            (self.product / ".claude/harness-manifest.json").read_text(encoding="utf-8")
+        )
+        self.assertIn(".mcp.json", manifest["files"])
+        self.assertEqual(
+            sha256_file(mcp_path), manifest["files"][".mcp.json"]["sha256"]
+        )
+        self.assertNoSecret(mcp_path)
+
+    def test_codex_installation_creates_mcp_config(self):
+        self.run_cmd(*self.base_args("codex"), check=True)
+
+        mcp_path = self.product / ".codex/config.toml"
+        self.assertTrue(mcp_path.is_file())
+        content = mcp_path.read_text(encoding="utf-8")
+        self.assertIn("[mcp_servers.atlassian]", content)
+        self.assertIn("https://mcp.atlassian.com/v2/mcp", content)
+
+        manifest = json.loads(
+            (self.product / ".codex/harness-manifest.json").read_text(encoding="utf-8")
+        )
+        self.assertIn(".codex/config.toml", manifest["files"])
+        self.assertEqual(
+            sha256_file(mcp_path), manifest["files"][".codex/config.toml"]["sha256"]
+        )
+        self.assertNoSecret(mcp_path)
+
+    def test_jira_context_is_installed(self):
+        self.run_cmd(*self.base_args("claude"), check=True)
+        self.assertTrue((self.product / ".claude/context/jira.md").is_file())
+
+        self.run_cmd(*self.base_args("codex"), check=True)
+        self.assertTrue((self.product / ".codex/context/jira.md").is_file())
+
+    def assertNoSecret(self, path):
+        content = path.read_text(encoding="utf-8")
+        for needle in ("Authorization:", "Bearer ", "Basic ", "password", "secret", "token="):
+            self.assertNotIn(needle, content, f"secret marker {needle!r} in {path}")
+
     def test_sensitive_source_is_refused(self):
         temp_harness = self.root / "harness-copy"
         shutil.copytree(
@@ -181,6 +230,12 @@ class InstallContextTest(unittest.TestCase):
 
         self.assertEqual(1, result.returncode)
         self.assertIn("sensitive source refused", result.stderr)
+
+
+def sha256_file(path):
+    import hashlib
+
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def snapshot(root):

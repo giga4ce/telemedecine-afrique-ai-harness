@@ -26,7 +26,11 @@ In the product repository, read:
 
 ## Common Rules
 
-Apply `profiles/telemedecine-afrique/context/project-rules.md`, `poc-boundaries.md`, `workflow.md` and `repository-map.md`.
+Apply the installed shared rules from `.claude/context/`: `project-rules.md`, `poc-boundaries.md`, `workflow.md`, `repository-map.md` and `jira.md`.
+
+## Jira / MCP
+
+The Atlassian MCP server `atlassian` is declared in `.mcp.json` (transport HTTP, no secret). Authenticate once per machine via OAuth. Follow the traceability rule in `.claude/context/jira.md`: open a Jira ticket (project `KAN`) after each completed task.
 
 ## Claude Notes
 

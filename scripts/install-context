@@ -358,6 +358,23 @@ def build_plan(
     content += template_path.read_bytes()
     planned.append(PlannedFile(destination=destination, source=template_source, content=content))
 
+    root_allow = {destination}
+
+    mcp = adapter.get("mcp")
+    if isinstance(mcp, dict):
+        mcp_source = expand_profile(str(mcp["source"]), profile_name)
+        mcp_path = source_path(harness_root, mcp_source)
+        ensure_safe_source(mcp_path, harness_root)
+        mcp_destination = str(mcp["destination"])
+        root_allow.add(mcp_destination)
+        planned.append(
+            PlannedFile(
+                destination=mcp_destination,
+                source=mcp_source,
+                content=mcp_path.read_bytes(),
+            )
+        )
+
     context = require_mapping(adapter, "context")
     planned.extend(
         copy_tree_plan(
@@ -391,7 +408,7 @@ def build_plan(
 
     assert_unique_destinations(planned)
     for item in planned:
-        assert_managed_destination(item.destination, str(adapter["install_root"]))
+        assert_managed_destination(item.destination, str(adapter["install_root"]), root_allow)
         if is_sensitive_destination(item.destination):
             raise InstallError(f"ERROR: sensitive destination refused: {item.destination}")
     return sorted(planned, key=lambda item: item.destination)
@@ -482,15 +499,14 @@ def ensure_safe_source(path: Path, harness_root: Path) -> None:
             raise InstallError(f"ERROR: sensitive source refused: {relative.as_posix()}")
 
 
-def assert_managed_destination(destination: str, install_root: str) -> None:
-    allowed_roots = {install_root, "."}
-    first = destination.split("/", 1)[0]
-    if destination in ("AGENTS.md", "CLAUDE.md"):
-        return
-    if first not in {root.split("/", 1)[0] for root in allowed_roots if root != "."}:
-        raise InstallError(f"ERROR: destination outside adapter scope: {destination}")
+def assert_managed_destination(destination: str, install_root: str, root_allow: set[str]) -> None:
     if ".." in Path(destination).parts or destination.startswith("/"):
         raise InstallError(f"ERROR: unsafe destination: {destination}")
+    if destination in root_allow:
+        return
+    first = destination.split("/", 1)[0]
+    if first != install_root.split("/", 1)[0]:
+        raise InstallError(f"ERROR: destination outside adapter scope: {destination}")
 
 
 def is_sensitive_destination(destination: str) -> bool:

@@ -26,7 +26,11 @@ In the product repository, read:
 
 ## Common Rules
 
-Apply the installed shared rules from `.codex/context/project-rules.md` and the POC boundaries from `.codex/context/poc-boundaries.md`.
+Apply the installed shared rules from `.codex/context/project-rules.md`, the POC boundaries from `.codex/context/poc-boundaries.md` and the Jira rules from `.codex/context/jira.md`.
+
+## Jira / MCP
+
+The Atlassian MCP server `atlassian` is declared in `.codex/config.toml` (transport HTTP, no secret). Authenticate once per machine via OAuth. Follow the traceability rule in `.codex/context/jira.md`: open a Jira ticket (project `KAN`) after each completed task.
 
 ## Installed Skills
 

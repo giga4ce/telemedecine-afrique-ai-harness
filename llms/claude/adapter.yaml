@@ -12,6 +12,9 @@ backup_dir: .claude/.harness-backups
 entrypoint:
   source: llms/claude/templates/CLAUDE.md.tmpl
   destination: CLAUDE.md
+mcp:
+  source: llms/claude/templates/mcp.json.tmpl
+  destination: .mcp.json
 context:
   source: profiles/{profile}/context
   destination: .claude/context

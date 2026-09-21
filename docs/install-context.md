@@ -49,6 +49,7 @@ Codes de sortie :
 ## Sorties Codex
 
 - `AGENTS.md`
+- `.codex/config.toml` (déclaration MCP Atlassian)
 - `.codex/context/`
 - `.codex/skills/`
 - `.codex/harness-manifest.json`
@@ -56,12 +57,36 @@ Codes de sortie :
 ## Sorties Claude
 
 - `CLAUDE.md`
+- `.mcp.json` (déclaration MCP Atlassian)
 - `.claude/context/`
 - `.claude/agents/`
 - `.claude/skills/`
 - `.claude/harness-manifest.json`
 
 Les skills conditionnels FastAPI et React ne sont pas installés en v1, car le produit n'initialise pas encore ces stacks.
+
+## Serveur MCP Atlassian (Jira)
+
+Le harness installe la déclaration du serveur MCP `atlassian` (transport HTTP `https://mcp.atlassian.com/v2/mcp`), sans aucun secret :
+
+- Claude : `.mcp.json` à la racine du produit.
+- Codex : bloc `[mcp_servers.atlassian]` dans `.codex/config.toml`.
+
+L'endpoint historique `v1/sse` est déprécié (retrait après le 30 juin 2026) ; la déclaration vise `v2/mcp`.
+
+### Authentification OAuth — étape manuelle, par développeur
+
+L'authentification n'est jamais automatisée ni stockée dans le dépôt. Chaque développeur l'exécute **une fois par outil et par machine**, depuis la racine du produit :
+
+```bash
+# Claude Code
+claude mcp login atlassian
+
+# Codex CLI
+codex mcp login atlassian
+```
+
+Un navigateur s'ouvre pour le flux OAuth 2.1 Atlassian. Les jetons sont stockés localement par l'outil (hors dépôt).
 
 ## Manifest
 

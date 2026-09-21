@@ -10,6 +10,9 @@ backup_dir: .codex/.harness-backups
 entrypoint:
   source: llms/codex/templates/AGENTS.md.tmpl
   destination: AGENTS.md
+mcp:
+  source: llms/codex/templates/mcp.toml.tmpl
+  destination: .codex/config.toml
 context:
   source: profiles/{profile}/context
   destination: .codex/context

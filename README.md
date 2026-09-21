@@ -37,6 +37,17 @@ Exemple Claude :
 
 Lire [`docs/install-context.md`](docs/install-context.md) pour les options, les manifestes, les conflits et les codes de sortie.
 
+## Serveur MCP Atlassian (Jira)
+
+Le harness installe la déclaration du serveur MCP `atlassian` (transport HTTP `v2/mcp`, sans secret) : `.mcp.json` côté Claude, `.codex/config.toml` côté Codex. Après installation, chaque développeur s'authentifie **une fois par outil et par machine** :
+
+```bash
+claude mcp login atlassian   # Claude Code
+codex mcp login atlassian    # Codex CLI
+```
+
+Détails et règle de traçabilité par ticket : [`docs/install-context.md`](docs/install-context.md) et `profiles/telemedecine-afrique/context/jira.md`.
+
 ## Hors périmètre
 
 Ce repository ne contient pas le code produit, ne gère pas les données DICOM et ne remplace pas la documentation métier du produit.

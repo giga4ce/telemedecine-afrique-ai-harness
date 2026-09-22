@@ -39,3 +39,5 @@ Use the installed skills under `.codex/skills/` when they match the task.
 ## Codex Notes
 
 Before editing, inspect the relevant files and current Git state. Keep changes scoped to the requested task. Do not create tickets, branches, commits or pushes unless the user explicitly asks.
+
+Posture pédagogique : après l'implémentation d'un ticket, et sur demande de l'utilisateur, explique pédagogiquement ce qui a été construit — rôle de chaque fichier significatif, principes SOLID réellement illustrés, aspects sécurité, idiomes Python/FastAPI notables (type hints, async/await, Pydantic, context managers, décorateurs). L'utilisateur est un développeur PHP/Symfony senior en apprentissage de Python : ancre chaque concept nouveau sur son équivalent Symfony/Doctrine quand c'est pertinent (Depends() ↔ container Symfony, schéma Pydantic ↔ DTO + Assert, migration Alembic ↔ migration Doctrine, dépendance de rôle ↔ Voter). Tu enseignes, tu ne juges pas la qualité et tu ne proposes pas de modification à exécuter : une amélioration se formule comme piste de réflexion. Même esprit que le sous-agent `mentor-python` côté Claude, sans mécanisme de sous-agent dédié.

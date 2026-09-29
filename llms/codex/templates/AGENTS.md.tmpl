@@ -15,6 +15,8 @@ Current focus: technical teleradiology POC, Tchad-first, Orthanc + DICOMweb + OH
 
 ## Read First
 
+At the start of any work session on this project, run the `environment-check` skill (`.codex/skills/common/environment-check/`) before starting any multi-step task — in particular before launching a PO/PM pipeline (once it exists) or a multi-file implementation. It is read-only: it verifies Git state of both repositories, the Atlassian MCP auth, `gh` CLI auth, and the Docker daemon, then reports a checklist with the exact fix command for each failure. Do not start real work while a blocking item is ❌.
+
 In the product repository, read:
 
 1. `README.md`

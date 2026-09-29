@@ -2,6 +2,7 @@ version: 1
 
 recommended_skills:
   common:
+    - skills/common/environment-check
     - skills/common/git-workflow
     - skills/common/documentation
     - skills/common/architecture-review

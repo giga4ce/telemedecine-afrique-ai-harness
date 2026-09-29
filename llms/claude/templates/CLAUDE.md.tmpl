@@ -36,6 +36,7 @@ The Atlassian MCP server `atlassian` is declared in `.mcp.json` (transport HTTP,
 
 ## Claude Notes
 
-Claude sub-agents live in `.claude/agents/` (`backend-fastapi`, `frontend-react`, `dicom-integration`, `devops-infra`, `tests-qualite`, `securite-conformite`, `mentor-python`). Use them only when their task applies. The FastAPI backend and the React frontend are future or conditional stack choices until the product repository initializes them.
+Claude sub-agents live in `.claude/agents/` (`po-pm`, `backend-fastapi`, `frontend-react`, `dicom-integration`, `devops-infra`, `tests-qualite`, `securite-conformite`, `mentor-python`). Use them only when their task applies. The FastAPI backend and the React frontend are future or conditional stack choices until the product repository initializes them.
 
+- `po-pm` : agent PO/PM fusionné qui porte un ticket de bout en bout (cadrage, orchestration des agents techniques, suivi, ouverture de PR, clôture Jira). À invoquer **à la demande explicite uniquement, jamais proactif** (« lance le pipeline sur KAN-X ») ; il prépare mais ne fusionne jamais, ne commit/push/priorise jamais de manière autonome et n'écrit pas de code métier. Pipeline détaillé dans `docs/agent-pipeline-plan.md`.
 - `mentor-python` : agent pédagogique en lecture seule, à invoquer après l'implémentation d'un ticket pour expliquer ce qui a été construit (structure, SOLID, sécurité, idiomes Python/FastAPI) avec des parallèles Symfony/PHP ; il enseigne, il ne juge pas la qualité (rôle de `securite-conformite`).

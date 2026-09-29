@@ -104,19 +104,24 @@ Précondition : cadrage validé par l'humain (point d'arrêt 🛑 étape 1).
 
 Précondition : travail terminé **et validé par l'humain** (point d'arrêt 🛑 étape 8). Le push et l'ouverture de PR ne se font qu'après ce feu vert.
 
-1. Pousser la branche : `git push -u origin feature/KAN-XXX`.
-2. **Ne jamais interpoler un contenu dynamique (titre, description) dans le texte d'une commande shell.** Écrire titre et corps dans deux fichiers temporaires distincts avec l'outil `Write` — pas via un heredoc ni une chaîne shell — sur des chemins uniques générés par `mktemp`, puis les passer à `gh` :
+Pousser la branche puis ouvrir la PR. **Ne jamais interpoler un contenu dynamique (titre, description) dans le texte d'une commande shell** : le titre et le corps passent par des fichiers. `Write` et `Bash` sont des **appels d'outils distincts** — la séquence ci-dessous les enchaîne dans cet ordre exact, sans supposer qu'une variable shell persiste d'un appel `Bash` au suivant.
+
+1. **Bash** : `git push -u origin feature/KAN-XXX`.
+2. **Bash** : exécuter `mktemp` seul, capturer le chemin affiché (ex. `/tmp/tmp.XXXXXX`) — c'est le **fichier du titre**.
+3. **Bash** : exécuter `mktemp` à nouveau, capturer le chemin — c'est le **fichier du corps**.
+4. **Write** : écrire le titre (une seule ligne, court) dans le chemin capturé à l'étape 2.
+5. **Write** : écrire le corps (contexte → changements → tests → impact, référence `KAN-XXX`) dans le chemin capturé à l'étape 3.
+6. **Bash** : dans **un seul appel**, lancer `gh` en réinjectant les chemins réels capturés (pas des noms de variables supposés persister entre appels) :
    ```bash
-   pr_title_file="$(mktemp)"   # y écrire le titre (une ligne) via l'outil Write
-   pr_body_file="$(mktemp)"    # y écrire le corps (contexte → changements → tests → impact) via l'outil Write
-   pr_title="$(cat "$pr_title_file")"
    gh pr create --base main --head feature/KAN-XXX \
-     --title "$pr_title" \
-     --body-file "$pr_body_file"
-   rm -f "$pr_title_file" "$pr_body_file"
+     --title "$(cat /chemin/capturé/étape2)" \
+     --body-file /chemin/capturé/étape3
    ```
-   C'est sûr parce qu'une valeur **déjà contenue dans une variable shell** n'est pas réanalysée pour une substitution de commande lors de son expansion entre guillemets doubles — contrairement au cas B1 d'origine, où le titre et le corps étaient construits par interpolation littérale dans le texte de la commande *avant* exécution. Le corps ne transite jamais par la ligne de commande.
-3. Commenter le ticket `KAN-XXX` avec l'URL de la PR (`mcp__atlassian__addOrEditJiraIssueComment`). Laisser le ticket « En cours ».
+   C'est sûr : le titre est substitué depuis le **contenu d'un fichier** au moment de l'exécution, pas construit par interpolation littérale dans le texte de la commande *avant* exécution (le défaut B1 d'origine). Le corps ne transite jamais par la ligne de commande.
+7. **Vérifier le code de sortie de `gh pr create`** (résultat de l'appel `Bash` de l'étape 6) avant de continuer.
+   - **Échec** : **ne pas supprimer** les fichiers temporaires (utiles pour diagnostiquer ou relancer). Signaler précisément l'échec — cf. la ligne « Échec de création de PR après push réussi » du tableau des cas d'erreur — et **s'arrêter**.
+   - **Succès** : **alors seulement**, supprimer les deux fichiers temporaires (`rm -f <fichier titre> <fichier corps>`).
+8. Commenter le ticket `KAN-XXX` avec l'URL de la PR (`mcp__atlassian__addOrEditJiraIssueComment`). Laisser le ticket « En cours ».
 
 ### Étape 11 — Clôture Jira
 

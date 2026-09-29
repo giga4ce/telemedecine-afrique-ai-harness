@@ -84,6 +84,77 @@ Le pipeline détaillé en **11 étapes** (besoin → cadrage → branche+ticket 
 
 Un point 🔴 bloquant en revue sécurité (`securite-conformite`) est un verrou dur : retour à l'implémentation, jamais de contournement.
 
+## Mécanique opérationnelle (ECO-04)
+
+Connexion concrète au flux existant. Ne duplique pas `git-workflow` (règles de branche/PR) ni le skill `agent-pipeline` (séquence des 11 étapes) : cette section décrit **comment** exécuter les étapes 2, 8 et 11 du pipeline. Chaque mutation sensible reste soumise à l'arrêt obligatoire ci-dessus.
+
+### Étape 2 — Cadrage → ticket + branche
+
+Précondition : cadrage validé par l'humain (point d'arrêt 🛑 étape 1).
+
+1. Créer le ticket Jira sur le projet `KAN` via `mcp__atlassian__createJiraIssue` (résumé, description contexte/changement/impact/critères d'acceptation). Récupérer la clé `KAN-XXX` retournée.
+2. **Contrôler le worktree avant tout `checkout`/`pull`** (cf. `git-workflow`) : `git status --short --branch` et `git branch -vv`. S'il y a des modifications locales non validées ou un état inattendu (détaché, branche divergente), **s'arrêter et signaler** — ne rien écraser.
+3. Sur un worktree propre, partir d'un `main` à jour, puis créer la branche :
+   ```bash
+   git checkout main && git pull --ff-only origin main
+   git checkout -b feature/KAN-XXX
+   ```
+
+### Étape 8 — Ouverture de PR
+
+Précondition : travail terminé **et validé par l'humain** (point d'arrêt 🛑 étape 8). Le push et l'ouverture de PR ne se font qu'après ce feu vert.
+
+Pousser la branche puis ouvrir la PR. **Ne jamais interpoler un contenu dynamique (titre, description) dans le texte d'une commande shell** : le titre et le corps passent par des fichiers. `Write` et `Bash` sont des **appels d'outils distincts** — la séquence ci-dessous les enchaîne dans cet ordre exact, sans supposer qu'une variable shell persiste d'un appel `Bash` au suivant.
+
+1. **Bash** : `git push -u origin feature/KAN-XXX`.
+2. **Bash** : exécuter `mktemp` seul, capturer le chemin affiché (ex. `/tmp/tmp.XXXXXX`) — c'est le **fichier du titre**.
+3. **Bash** : exécuter `mktemp` à nouveau, capturer le chemin — c'est le **fichier du corps**.
+4. **Write** : écrire le titre (une seule ligne, court) dans le chemin capturé à l'étape 2.
+5. **Write** : écrire le corps (contexte → changements → tests → impact, référence `KAN-XXX`) dans le chemin capturé à l'étape 3.
+6. **Bash** : dans **un seul appel**, lancer `gh` en réinjectant les chemins réels capturés (pas des noms de variables supposés persister entre appels) :
+   ```bash
+   gh pr create --base main --head feature/KAN-XXX \
+     --title "$(cat /chemin/capturé/étape2)" \
+     --body-file /chemin/capturé/étape3
+   ```
+   C'est sûr : le titre est substitué depuis le **contenu d'un fichier** au moment de l'exécution, pas construit par interpolation littérale dans le texte de la commande *avant* exécution (le défaut B1 d'origine). Le corps ne transite jamais par la ligne de commande.
+7. **Vérifier le code de sortie de `gh pr create`** (résultat de l'appel `Bash` de l'étape 6) avant de continuer.
+   - **Échec** : **ne pas supprimer** les fichiers temporaires (utiles pour diagnostiquer ou relancer). Signaler précisément l'échec — cf. la ligne « Échec de création de PR après push réussi » du tableau des cas d'erreur — et **s'arrêter**.
+   - **Succès** : **alors seulement**, supprimer les deux fichiers temporaires (`rm -f <fichier titre> <fichier corps>`).
+8. Commenter le ticket `KAN-XXX` avec l'URL de la PR (`mcp__atlassian__addOrEditJiraIssueComment`). Laisser le ticket « En cours ».
+
+### Étape 11 — Clôture Jira
+
+Précondition : **fusion humaine confirmée** (point d'arrêt 🛑 étapes 9-10). Ne jamais fusionner soi-même.
+
+1. **Vérifier la fusion, prédicat contraignant.** Lire l'état réel : `gh pr view <n> --json state,mergedAt`.
+   - Continuer vers la clôture **uniquement si** `state == "MERGED"` **ET** `mergedAt` est **non nul**.
+   - Si la PR est ouverte, fermée sans fusion, introuvable, ou si la commande de vérification échoue : **signaler précisément l'état constaté et s'arrêter**. Ne **jamais** commenter la clôture, ne **jamais** appeler `transitionJiraIssue`.
+2. **Contrôler le worktree** (`git status --short --branch`, `git branch -vv`) ; s'arrêter si modifications locales ou état inattendu. Puis mettre `main` à jour : `git checkout main && git pull --ff-only origin main`.
+3. **Transiter le ticket d'abord** vers « Terminé » : `listJiraIssueTransitions` puis `transitionJiraIssue`.
+4. **Seulement si la transition a réussi**, commenter la clôture sur `KAN-XXX` (changement réalisé, impact) via `mcp__atlassian__addOrEditJiraIssueComment`. Si la transition échoue : signaler, ne pas commenter une clôture sur un ticket resté « En cours ».
+
+### Gestion des cas d'erreur
+
+Comportement par défaut : **signaler et s'arrêter**, jamais improviser une correction destructive.
+
+| Cas | Comportement attendu |
+|---|---|
+| Worktree sale / état inattendu avant `checkout`/`pull` | S'arrêter, signaler `git status`. Ne rien écraser, ne pas stasher ni committer d'office. |
+| Branche `feature/KAN-XXX` déjà existante | S'arrêter, signaler. Ne pas forcer, ne pas écraser, ne pas supprimer la branche sans validation. |
+| Ticket `KAN-XXX` introuvable | S'arrêter, signaler. Ne pas créer un ticket de substitution ni deviner une autre clé. |
+| PR déjà ouverte pour la branche | S'arrêter, signaler l'URL existante. Ne pas en ouvrir une seconde. |
+| Échec du `git push` (droits / réseau / non-fast-forward) | S'arrêter, signaler. **Jamais de force-push.** Ne pas réécrire l'historique pour « faire passer » le push. |
+| Échec de création de PR **après** push réussi | S'arrêter, signaler (la branche est poussée, la PR n'existe pas). Ne pas re-pousser en boucle ; laisser l'humain relancer `gh pr create`. |
+| Échec du commentaire Jira **après** création de PR | S'arrêter, signaler (PR ouverte, ticket non commenté). Ne pas fermer/rouvrir la PR ; l'humain complète le commentaire. |
+| `git pull --ff-only` échoue (divergence) | S'arrêter, signaler. Ne pas `reset --hard`, ni rebase/force-push autonome. |
+| Conflit / PR non fusionnable | Rester **avant** l'étape 11, solliciter l'humain. Ne pas tenter de résoudre les conflits ni de fusionner. |
+| **PR non fusionnée ou vérification impossible** (state ≠ MERGED, `mergedAt` nul, PR fermée sans fusion, introuvable, ou `gh pr view` échoue) | S'arrêter, signaler l'état exact. **Ne pas** commenter la clôture, **ne pas** appeler `transitionJiraIssue`. |
+| Ticket déjà dans un état terminal | Ne pas retransiter, ne pas dupliquer le commentaire de clôture. Signaler que la clôture est déjà faite. |
+| Transition Jira indisponible | S'arrêter, signaler les transitions valides (`listJiraIssueTransitions`). Ne pas éditer le statut par un autre moyen. |
+
+Dans tous les cas : demander la décision à l'utilisateur, ne jamais enchaîner sur une opération destructive ou irréversible.
+
 ## Frontière ECO-02 / ECO-04
 
-Cette fiche (ECO-02) pose l'**identité, les responsabilités et les garde-fous** de `po-pm`. La **mécanique opérationnelle détaillée** — séquence exacte des commandes de création de branche `feature/KAN-XXX`, d'ouverture de PR via `gh`, et la gestion des cas d'erreur — sera affinée par **ECO-04 (KAN-26)**. Tant qu'ECO-04 n'est pas livré, tiens-t'en aux garde-fous ci-dessus et à `git-workflow`.
+`ECO-02` (KAN-24) a posé l'identité, les responsabilités et les garde-fous. `ECO-04` (ci-dessus) ajoute la mécanique opérationnelle du flux Jira/branche/PR. Les règles de branche/PR restent dans `git-workflow` ; la séquence des étapes reste dans le skill `agent-pipeline`.

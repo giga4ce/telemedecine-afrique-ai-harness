@@ -41,7 +41,8 @@ Aucun agent ne **porte le ticket de bout en bout** : les sept agents sont des ex
 |---|---|---|---|
 | A1 | Nom de l'agent | **`po-pm`** — validé par Harou le 29/09/2026 | Harou |
 | A2 | Modèle | **`opus`** (raisonnement de cadrage) — validé par Harou le 29/09/2026 | Harou |
-| A3 | Outils | `po-pm` a besoin d'écrire (docs, PR) et d'accéder au MCP Jira/`gh` ; périmètre exact d'écriture à borner | ECO-02 |
+| A3 | Périmètre d'écriture (cadrage) | **Tranché au niveau rôle (voir §2.4), validé par Harou le 29/09/2026** : `po-pm` écrit des livrables de cadrage/suivi (docs, description Jira, description PR, notes) et prépare la branche `feature/KAN-XXX` ; il n'écrit jamais de code métier, ne fusionne pas, ne commit/push pas de manière autonome. | Harou |
+| A3' | Traduction en outils (`tools`) de la fiche | La déclinaison technique du périmètre §2.4 en frontmatter `tools` de la fiche d'agent (accès MCP Jira, `gh`, écriture fichiers) reste à borner | ECO-02 |
 | A4 | Déclenchement | **À la demande explicite uniquement, jamais proactif ni automatique** — le pipeline ne démarre que si l'utilisateur dit explicitement « lance le pipeline sur KAN-X » ou équivalent. Validé par Harou le 29/09/2026 | Harou |
 | A5 | Codex | Parité via posture `AGENTS.md`, sans orchestration de sous-agents réelle côté Codex — portée à confirmer | ECO-05 |
 
@@ -82,6 +83,24 @@ Rôle unique fusionnant **Product Owner** (cadrage, priorisation, rédaction du 
 | Verdict sécurité | consomme, ne juge pas | `securite-conformite` |
 | Pédagogie | déclenche, n'enseigne pas | `mentor-python` |
 | Infra / déploiement | planifie l'étape, n'exécute pas | `devops-infra` |
+
+### 2.4 Périmètre d'écriture (cadrage, A3 — validé par Harou le 29/09/2026)
+
+Périmètre tranché au niveau du rôle. La traduction en frontmatter `tools` de la fiche d'agent relève d'ECO-02 (A3').
+
+**Autorisé en écriture :**
+
+- Livrables de cadrage et de suivi : documents de cadrage, notes de suivi d'avancement.
+- Description et mises à jour du ticket Jira (`KAN-XXX`) via le MCP `atlassian`.
+- Description de PR (contexte → changements → tests → impact) via `gh`.
+- Préparation de la branche `feature/KAN-XXX` (cf. `git-workflow`).
+
+**Interdit en écriture (rappel des garde-fous §2.2) :**
+
+- ❌ Code métier — orienté vers `backend-fastapi` / `frontend-react` / `dicom-integration`.
+- ❌ Fusion de PR — réservée à l'humain.
+- ❌ Commit ou push autonome — même limite que le reste du harness.
+- ❌ Verdict qualité/sécurité — produit par `securite-conformite`, jamais par `po-pm`.
 
 ---
 

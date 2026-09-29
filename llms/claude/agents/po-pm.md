@@ -93,7 +93,8 @@ Connexion concrète au flux existant. Ne duplique pas `git-workflow` (règles de
 Précondition : cadrage validé par l'humain (point d'arrêt 🛑 étape 1).
 
 1. Créer le ticket Jira sur le projet `KAN` via `mcp__atlassian__createJiraIssue` (résumé, description contexte/changement/impact/critères d'acceptation). Récupérer la clé `KAN-XXX` retournée.
-2. Partir d'un `main` à jour, puis créer la branche :
+2. **Contrôler le worktree avant tout `checkout`/`pull`** (cf. `git-workflow`) : `git status --short --branch` et `git branch -vv`. S'il y a des modifications locales non validées ou un état inattendu (détaché, branche divergente), **s'arrêter et signaler** — ne rien écraser.
+3. Sur un worktree propre, partir d'un `main` à jour, puis créer la branche :
    ```bash
    git checkout main && git pull --ff-only origin main
    git checkout -b feature/KAN-XXX
@@ -104,32 +105,25 @@ Précondition : cadrage validé par l'humain (point d'arrêt 🛑 étape 1).
 Précondition : travail terminé **et validé par l'humain** (point d'arrêt 🛑 étape 8). Le push et l'ouverture de PR ne se font qu'après ce feu vert.
 
 1. Pousser la branche : `git push -u origin feature/KAN-XXX`.
-2. Ouvrir la PR via `gh`, description reprenant contexte → changements → tests → impact et référençant `KAN-XXX` :
+2. **Ne jamais interpoler un contenu dynamique (titre, description) dans une commande shell entre guillemets.** Écrire le corps de la PR (sections contexte → changements → tests → impact, référence `KAN-XXX`) dans un fichier temporaire avec l'outil `Write` — pas via un heredoc ou une chaîne shell — puis le passer à `gh` par `--body-file` :
    ```bash
    gh pr create --base main --head feature/KAN-XXX \
-     --title "KAN-XXX — <titre court>" \
-     --body "## Contexte
-   <pourquoi, lien KAN-XXX>
-
-   ## Changements
-   <fichiers et nature>
-
-   ## Tests
-   <ce qui a été vérifié>
-
-   ## Impact
-   <effets, dépendances>"
+     --title 'KAN-XXX — <titre court>' \
+     --body-file /tmp/pr-body-KAN-XXX.md
    ```
+   Le corps ne transite jamais par la ligne de commande. Le titre passe entre quotes simples ; s'il contient lui-même une quote simple, le passer aussi par un fichier (`--title` n'a pas d'équivalent `--title-file`, donc préférer un titre court sans quote) plutôt que de bricoler l'échappement.
 3. Commenter le ticket `KAN-XXX` avec l'URL de la PR (`mcp__atlassian__addOrEditJiraIssueComment`). Laisser le ticket « En cours ».
 
 ### Étape 11 — Clôture Jira
 
 Précondition : **fusion humaine confirmée** (point d'arrêt 🛑 étapes 9-10). Ne jamais fusionner soi-même.
 
-1. Vérifier que la PR est réellement fusionnée avant toute clôture (ex. `gh pr view <n> --json state,mergedAt`).
-2. Mettre `main` à jour : `git checkout main && git pull --ff-only origin main`.
-3. Commenter la clôture sur `KAN-XXX` (changement réalisé, impact) via `mcp__atlassian__addOrEditJiraIssueComment`.
-4. Transiter le ticket vers « Terminé » : `listJiraIssueTransitions` puis `transitionJiraIssue`.
+1. **Vérifier la fusion, prédicat contraignant.** Lire l'état réel : `gh pr view <n> --json state,mergedAt`.
+   - Continuer vers la clôture **uniquement si** `state == "MERGED"` **ET** `mergedAt` est **non nul**.
+   - Si la PR est ouverte, fermée sans fusion, introuvable, ou si la commande de vérification échoue : **signaler précisément l'état constaté et s'arrêter**. Ne **jamais** commenter la clôture, ne **jamais** appeler `transitionJiraIssue`.
+2. **Contrôler le worktree** (`git status --short --branch`, `git branch -vv`) ; s'arrêter si modifications locales ou état inattendu. Puis mettre `main` à jour : `git checkout main && git pull --ff-only origin main`.
+3. **Transiter le ticket d'abord** vers « Terminé » : `listJiraIssueTransitions` puis `transitionJiraIssue`.
+4. **Seulement si la transition a réussi**, commenter la clôture sur `KAN-XXX` (changement réalisé, impact) via `mcp__atlassian__addOrEditJiraIssueComment`. Si la transition échoue : signaler, ne pas commenter une clôture sur un ticket resté « En cours ».
 
 ### Gestion des cas d'erreur
 
@@ -137,10 +131,17 @@ Comportement par défaut : **signaler et s'arrêter**, jamais improviser une cor
 
 | Cas | Comportement attendu |
 |---|---|
+| Worktree sale / état inattendu avant `checkout`/`pull` | S'arrêter, signaler `git status`. Ne rien écraser, ne pas stasher ni committer d'office. |
 | Branche `feature/KAN-XXX` déjà existante | S'arrêter, signaler. Ne pas forcer, ne pas écraser, ne pas supprimer la branche sans validation. |
 | Ticket `KAN-XXX` introuvable | S'arrêter, signaler. Ne pas créer un ticket de substitution ni deviner une autre clé. |
 | PR déjà ouverte pour la branche | S'arrêter, signaler l'URL existante. Ne pas en ouvrir une seconde. |
+| Échec du `git push` (droits / réseau / non-fast-forward) | S'arrêter, signaler. **Jamais de force-push.** Ne pas réécrire l'historique pour « faire passer » le push. |
+| Échec de création de PR **après** push réussi | S'arrêter, signaler (la branche est poussée, la PR n'existe pas). Ne pas re-pousser en boucle ; laisser l'humain relancer `gh pr create`. |
+| Échec du commentaire Jira **après** création de PR | S'arrêter, signaler (PR ouverte, ticket non commenté). Ne pas fermer/rouvrir la PR ; l'humain complète le commentaire. |
 | `git pull --ff-only` échoue (divergence) | S'arrêter, signaler. Ne pas `reset --hard`, ni rebase/force-push autonome. |
+| Conflit / PR non fusionnable | Rester **avant** l'étape 11, solliciter l'humain. Ne pas tenter de résoudre les conflits ni de fusionner. |
+| **PR non fusionnée ou vérification impossible** (state ≠ MERGED, `mergedAt` nul, PR fermée sans fusion, introuvable, ou `gh pr view` échoue) | S'arrêter, signaler l'état exact. **Ne pas** commenter la clôture, **ne pas** appeler `transitionJiraIssue`. |
+| Ticket déjà dans un état terminal | Ne pas retransiter, ne pas dupliquer le commentaire de clôture. Signaler que la clôture est déjà faite. |
 | Transition Jira indisponible | S'arrêter, signaler les transitions valides (`listJiraIssueTransitions`). Ne pas éditer le statut par un autre moyen. |
 
 Dans tous les cas : demander la décision à l'utilisateur, ne jamais enchaîner sur une opération destructive ou irréversible.

@@ -105,13 +105,17 @@ Précondition : cadrage validé par l'humain (point d'arrêt 🛑 étape 1).
 Précondition : travail terminé **et validé par l'humain** (point d'arrêt 🛑 étape 8). Le push et l'ouverture de PR ne se font qu'après ce feu vert.
 
 1. Pousser la branche : `git push -u origin feature/KAN-XXX`.
-2. **Ne jamais interpoler un contenu dynamique (titre, description) dans une commande shell entre guillemets.** Écrire le corps de la PR (sections contexte → changements → tests → impact, référence `KAN-XXX`) dans un fichier temporaire avec l'outil `Write` — pas via un heredoc ou une chaîne shell — puis le passer à `gh` par `--body-file` :
+2. **Ne jamais interpoler un contenu dynamique (titre, description) dans le texte d'une commande shell.** Écrire titre et corps dans deux fichiers temporaires distincts avec l'outil `Write` — pas via un heredoc ni une chaîne shell — sur des chemins uniques générés par `mktemp`, puis les passer à `gh` :
    ```bash
+   pr_title_file="$(mktemp)"   # y écrire le titre (une ligne) via l'outil Write
+   pr_body_file="$(mktemp)"    # y écrire le corps (contexte → changements → tests → impact) via l'outil Write
+   pr_title="$(cat "$pr_title_file")"
    gh pr create --base main --head feature/KAN-XXX \
-     --title 'KAN-XXX — <titre court>' \
-     --body-file /tmp/pr-body-KAN-XXX.md
+     --title "$pr_title" \
+     --body-file "$pr_body_file"
+   rm -f "$pr_title_file" "$pr_body_file"
    ```
-   Le corps ne transite jamais par la ligne de commande. Le titre passe entre quotes simples ; s'il contient lui-même une quote simple, le passer aussi par un fichier (`--title` n'a pas d'équivalent `--title-file`, donc préférer un titre court sans quote) plutôt que de bricoler l'échappement.
+   C'est sûr parce qu'une valeur **déjà contenue dans une variable shell** n'est pas réanalysée pour une substitution de commande lors de son expansion entre guillemets doubles — contrairement au cas B1 d'origine, où le titre et le corps étaient construits par interpolation littérale dans le texte de la commande *avant* exécution. Le corps ne transite jamais par la ligne de commande.
 3. Commenter le ticket `KAN-XXX` avec l'URL de la PR (`mcp__atlassian__addOrEditJiraIssueComment`). Laisser le ticket « En cours ».
 
 ### Étape 11 — Clôture Jira

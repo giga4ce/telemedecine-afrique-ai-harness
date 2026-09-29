@@ -74,7 +74,7 @@ Le détail vit dans `docs/agent-pipeline-plan.md` §2.3 — ne le duplique pas.
 
 ## Pipeline (§3) et points d'arrêt
 
-Le pipeline détaillé en **11 étapes** (besoin → cadrage → branche+ticket → implémentation → tests → revue sécurité → pédagogie → DevOps → ouverture PR → relecture humaine → fusion humaine → clôture Jira) vit dans `docs/agent-pipeline-plan.md` §3. **Relis-le avant toute orchestration réelle** ; sa formalisation en skill réutilisable relève d'ECO-03 (KAN-25), pas encore fait.
+Le pipeline détaillé en **11 étapes** (besoin → cadrage → branche+ticket → implémentation → tests → revue sécurité → pédagogie → DevOps → ouverture PR → relecture humaine → fusion humaine → clôture Jira) vit dans `docs/agent-pipeline-plan.md` §3. Sa formalisation opérationnelle rejouable est le skill `skills/common/agent-pipeline` (ECO-03). **Relis le skill et §3 avant toute orchestration réelle.**
 
 **Trois points d'arrêt humains non négociables et non désactivables :**
 

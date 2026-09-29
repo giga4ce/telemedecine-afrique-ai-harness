@@ -84,6 +84,67 @@ Le pipeline détaillé en **11 étapes** (besoin → cadrage → branche+ticket 
 
 Un point 🔴 bloquant en revue sécurité (`securite-conformite`) est un verrou dur : retour à l'implémentation, jamais de contournement.
 
+## Mécanique opérationnelle (ECO-04)
+
+Connexion concrète au flux existant. Ne duplique pas `git-workflow` (règles de branche/PR) ni le skill `agent-pipeline` (séquence des 11 étapes) : cette section décrit **comment** exécuter les étapes 2, 8 et 11 du pipeline. Chaque mutation sensible reste soumise à l'arrêt obligatoire ci-dessus.
+
+### Étape 2 — Cadrage → ticket + branche
+
+Précondition : cadrage validé par l'humain (point d'arrêt 🛑 étape 1).
+
+1. Créer le ticket Jira sur le projet `KAN` via `mcp__atlassian__createJiraIssue` (résumé, description contexte/changement/impact/critères d'acceptation). Récupérer la clé `KAN-XXX` retournée.
+2. Partir d'un `main` à jour, puis créer la branche :
+   ```bash
+   git checkout main && git pull --ff-only origin main
+   git checkout -b feature/KAN-XXX
+   ```
+
+### Étape 8 — Ouverture de PR
+
+Précondition : travail terminé **et validé par l'humain** (point d'arrêt 🛑 étape 8). Le push et l'ouverture de PR ne se font qu'après ce feu vert.
+
+1. Pousser la branche : `git push -u origin feature/KAN-XXX`.
+2. Ouvrir la PR via `gh`, description reprenant contexte → changements → tests → impact et référençant `KAN-XXX` :
+   ```bash
+   gh pr create --base main --head feature/KAN-XXX \
+     --title "KAN-XXX — <titre court>" \
+     --body "## Contexte
+   <pourquoi, lien KAN-XXX>
+
+   ## Changements
+   <fichiers et nature>
+
+   ## Tests
+   <ce qui a été vérifié>
+
+   ## Impact
+   <effets, dépendances>"
+   ```
+3. Commenter le ticket `KAN-XXX` avec l'URL de la PR (`mcp__atlassian__addOrEditJiraIssueComment`). Laisser le ticket « En cours ».
+
+### Étape 11 — Clôture Jira
+
+Précondition : **fusion humaine confirmée** (point d'arrêt 🛑 étapes 9-10). Ne jamais fusionner soi-même.
+
+1. Vérifier que la PR est réellement fusionnée avant toute clôture (ex. `gh pr view <n> --json state,mergedAt`).
+2. Mettre `main` à jour : `git checkout main && git pull --ff-only origin main`.
+3. Commenter la clôture sur `KAN-XXX` (changement réalisé, impact) via `mcp__atlassian__addOrEditJiraIssueComment`.
+4. Transiter le ticket vers « Terminé » : `listJiraIssueTransitions` puis `transitionJiraIssue`.
+
+### Gestion des cas d'erreur
+
+Comportement par défaut : **signaler et s'arrêter**, jamais improviser une correction destructive.
+
+| Cas | Comportement attendu |
+|---|---|
+| Branche `feature/KAN-XXX` déjà existante | S'arrêter, signaler. Ne pas forcer, ne pas écraser, ne pas supprimer la branche sans validation. |
+| Ticket `KAN-XXX` introuvable | S'arrêter, signaler. Ne pas créer un ticket de substitution ni deviner une autre clé. |
+| PR déjà ouverte pour la branche | S'arrêter, signaler l'URL existante. Ne pas en ouvrir une seconde. |
+| `git pull --ff-only` échoue (divergence) | S'arrêter, signaler. Ne pas `reset --hard`, ni rebase/force-push autonome. |
+| Transition Jira indisponible | S'arrêter, signaler les transitions valides (`listJiraIssueTransitions`). Ne pas éditer le statut par un autre moyen. |
+
+Dans tous les cas : demander la décision à l'utilisateur, ne jamais enchaîner sur une opération destructive ou irréversible.
+
 ## Frontière ECO-02 / ECO-04
 
-Cette fiche (ECO-02) pose l'**identité, les responsabilités et les garde-fous** de `po-pm`. La **mécanique opérationnelle détaillée** — séquence exacte des commandes de création de branche `feature/KAN-XXX`, d'ouverture de PR via `gh`, et la gestion des cas d'erreur — sera affinée par **ECO-04 (KAN-26)**. Tant qu'ECO-04 n'est pas livré, tiens-t'en aux garde-fous ci-dessus et à `git-workflow`.
+`ECO-02` (KAN-24) a posé l'identité, les responsabilités et les garde-fous. `ECO-04` (ci-dessus) ajoute la mécanique opérationnelle du flux Jira/branche/PR. Les règles de branche/PR restent dans `git-workflow` ; la séquence des étapes reste dans le skill `agent-pipeline`.

@@ -227,3 +227,9 @@ Ordre recommandé :
 Chemin critique : **ECO-01 → ECO-02 → ECO-04 → ECO-06**.
 
 **Point d'arrêt global :** aucune de ces specs ne démarre en implémentation avant validation explicite de ce découpage par Harou (principe non négociable rappelé en tête de document).
+
+---
+
+## 6. Notes de suivi
+
+- **Chemins source vs installés dans les skills/contextes** (relevé en revue KAN-25, Codex) : les skills et contextes du harness référencent parfois leur chemin *source* (ex. `skills/common/git-workflow`) plutôt que le chemin *installé* (`.claude/skills/...` ou `.codex/skills/...`). À traiter un jour comme nettoyage transverse de tous les skills, pas une correction ticket par ticket.

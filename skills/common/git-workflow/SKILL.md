@@ -27,3 +27,13 @@ This flow applies to the telemedecine-afrique product repository only, never to 
   1. push the branch;
   2. open a Pull Request with the `gh` CLI (see the section above for `gh` usage), describing the change and referencing the Jira ticket `KAN-XXX`;
   3. never merge autonomously — the user reviews and merges the PR themselves, exactly like a `git commit` or `git push`. The autonomy limit above extends to PR merges.
+
+## Limitations connues
+
+- Sur ce repository, `gh pr edit` échoue (bug lié aux project cards classic dépréciées côté GitHub). Contournement fonctionnel pour modifier le corps d'une PR :
+
+  ```sh
+  gh api -X PATCH repos/{owner}/{repo}/pulls/{number} -f body='...'
+  ```
+
+  `{owner}` et `{repo}` sont résolus automatiquement par `gh api` ; `{number}` est à remplacer par le numéro de la PR. Pour un corps multi-lignes, préférer `-F body=@fichier.md`.
